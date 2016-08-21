@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style type="text/css">
+
+        html, body, main {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            overflow: hidden;
+        }
+
+        main {
+            display: flex;
+            flex-direction: column;
+        }
+        form {
+            flex: 0 0 auto;
+        }
+        article {
+            overflow: scroll;
+            flex: 1 1 auto;
+        }
+        table {
+            table-layout: fixed;
+            border-collapse: collapse;
+        }
+        table td:first-child {
+            width: 3em;
+            text-align: right;
+        }
+        table td {
+            width: 100em;
+            border: 1px solid gray;
+        }
+        tr.done td {
+            color: green;
+        }
+        tr.done td:last-child {
+            animation: fadein 2s;
+        }
+        tr.waiting td {
+            color: gray;
+        }
+        tr.waiting td:last-child {
+            background-image: url('./ellipsis.gif');
+            background-repeat: no-repeat;
+            background-size: contain;
+            background-position-x: 50%;
+        }
+        tr.error td {
+            color: red;
+        }
+        input[type="number"] {
+            width: 5em;
+            text-align: center;
+        }
+
+        @keyframes fadein {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+    </style>
+    <script type="text/javascript" src="nativeapp.js"></script>
+    <script type="text/javascript" src="webapp.js"></script>
+
+    <script type="text/javascript">
+        function getRandomInt(min, max) {
+            min = Math.ceil(min);
+            max = Math.floor(max);
+            return Math.floor(Math.random() * (max - min)) + min;
+        }
+        var strings = [
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+            "Donec dapibus lacus eu tincidunt interdum.",
+            "Etiam dignissim turpis vel nunc euismod, vel pretium ipsum suscipit.",
+            "Nam non leo sodales nunc aliquet luctus.",
+            "Donec porttitor dolor nec turpis ultricies sagittis.",
+            "Suspendisse in ante dapibus, eleifend arcu eleifend, gravida justo.",
+            "Proin dapibus lacus id posuere luctus.",
+            "Pellentesque sodales odio eu justo molestie ultricies.",
+            "Maecenas a nunc eget lectus convallis iaculis ut nec turpis.",
+            "Duis sit amet velit id elit rhoncus molestie pellentesque sit amet tortor.",
+            "Proin vestibulum arcu sit amet commodo pulvinar.",
+            "Vivamus interdum lectus ut laoreet hendrerit.",
+            "Curabitur elementum ipsum at lorem tempor condimentum."
+        ];
+        function pickString() {
+            var stringId = getRandomInt(0, strings.length);
+            var string = strings[stringId];
+            var word = string.substr(0, string.indexOf(" "));
+            console.log("Velger string", stringId, word);
+            return word;
+        }
+        function addToQueue(string) {
+            var table = document.querySelector("#queue");
+            var idx = table.querySelectorAll("tr").length;
+            console.log("Vi har ", idx, "rader");
+            var row = document.createElement("tr");
+            row.setAttribute("id", "row-" + idx);
+            var td0 = document.createElement("td");
+            td0.innerText = idx;
+            row.appendChild(td0);
+            var td1 = document.createElement("td");
+            td1.innerText = string;
+            var td2 = document.createElement("td");
+            row.classList.add("waiting");
+            row.appendChild(td1);
+            row.appendChild(td2);
+            table.appendChild(row);
+
+
+            window.WebApp.submit(string)
+                    .then(function(result) {
+                        console.log("row", row);
+                        row.classList.remove("waiting");
+                        row.classList.add("done");
+                        td2.innerText = result;
+                    })
+                    .catch(function(error) {
+                        row.classList.remove("waiting");
+                        row.classList.add("error");
+                        td2.innerText = error.message;
+                    })
+            ;
+            return row;
+        }
+
+        function handleSubmitButtonClicked(event) {
+            event.preventDefault();
+            var sokeordInput = document.querySelector("#sokeord-input");
+            var string = sokeordInput.value.length > 0 ? sokeordInput.value : pickString();
+            var row = addToQueue(string);
+            sokeordInput.value = pickString();
+            sokeordInput.focus();
+            sokeordInput.select();
+            row.scrollIntoView();
+
+        }
+
+        function handleResetButtonClicked(event) {
+            event.preventDefault();
+            var rows = document.querySelectorAll("#queue tr");
+            for (var i = 0; i < rows.length; i++) {
+                var row = rows[i];
+                row.parentNode.removeChild(row);
+            }
+        }
+    </script>
+    <script type="text/javascript">
+        window.addEventListener("load", function() {
+            document.querySelector("#sokeord-input").value = pickString();
+            window.setInterval(function() {
+                document.querySelector("#webapp-queue-size").value = window.WebApp.getQueueLength();
+                document.querySelector("#nativeapp-queue-size").value = window.NativeApp.getQueueLength();
+                document.querySelector("#client-queue-size").value = document.querySelectorAll("#queue tr.waiting").length;
+                document.querySelector("#done-size").value = document.querySelectorAll("#queue tr.done, #queue tr.error").length;
+            }, 50);
+            for (var i = 0; i < 30; i++) {
+                document.querySelector("button[type='submit']").click();
+            }
+        });
+    </script>
+</head>
+<body>
+<main>
+    <form>
+        <label>Ord:
+            <input type="text" id="sokeord-input"/>
+        </label>
+        <button type="submit" onclick="handleSubmitButtonClicked(event)">Send jobb</button>
+        <br/>
+        <label>WebApp:
+            <input type="number" readonly id="webapp-queue-size" title="Webapp Queue Size"/>
+        </label>
+        <label>
+            Native:
+            <input type="number" readonly id="nativeapp-queue-size" title="Native App Queue Size"/>
+        </label>
+        <label>
+            Klient:
+            <input type="number" readonly id="client-queue-size" title="Done Size"/>
+        </label>
+        <label>
+            Ferdige:
+            <input type="number" readonly id="done-size" title="Done Size"/>
+        </label>
+        <br/>
+        <button type="reset" onclick="handleResetButtonClicked(event)">Tøm</button>
+    </form>
+
+    <article>
+        <table id="queue">
+
+        </table>
+    </article>
+</main>
+</body>
+</html>
