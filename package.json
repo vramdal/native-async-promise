@@ -1,0 +1,32 @@
+{
+  "name": "hybrid-async-interface",
+  "version": "0.1.0",
+  "description": "Simplifies interfacing with a native app when running a hybrid app (in a webview).",
+  "main": "hybrid-async-interface.js",
+  "scripts": {
+    "test": "npm test",
+    "start": "webpack-dev-server "
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vramdal/hybrid-async-interface.git"
+  },
+  "keywords": [
+    "hybrid",
+    "async"
+  ],
+  "author": "Vidar S. Ramdal",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/vramdal/hybrid-async-interface/issues"
+  },
+  "homepage": "https://github.com/vramdal/hybrid-async-interface#readme",
+  "devDependencies": {
+    "babel-core": "^6.13.2",
+    "babel-loader": "^6.2.5",
+    "babel-polyfill": "^6.13.0",
+    "babel-preset-es2015": "^6.13.2",
+    "path": "^0.12.7",
+    "webpack": "^1.13.2"
+  }
+}
